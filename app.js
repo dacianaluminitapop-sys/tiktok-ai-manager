@@ -285,7 +285,47 @@ async function loadPosts() {
     `;
   }).join("");
   
-  
+  list.querySelectorAll(".edit-post").forEach(button => {
+  button.addEventListener("click", async () => {
+    const postId = button.dataset.id;
+
+    const { data: post, error } = await supabaseClient
+      .from("content_posts")
+      .select("title, script, caption, hashtags")
+      .eq("id", postId)
+      .single();
+
+    if (error) {
+      alert("Eroare la încărcare: " + error.message);
+      return;
+    }
+
+    const title = prompt("Titlul postării:", post.title || "");
+    if (title === null) return;
+
+    const script = prompt("Scenariul:", post.script || "");
+    if (script === null) return;
+
+    const caption = prompt("Descrierea:", post.caption || "");
+    if (caption === null) return;
+
+    const hashtags = prompt("Hashtagurile:", post.hashtags || "");
+    if (hashtags === null) return;
+
+    const { error: updateError } = await supabaseClient
+      .from("content_posts")
+      .update({ title, script, caption, hashtags })
+      .eq("id", postId);
+
+    if (updateError) {
+      alert("Eroare la salvare: " + updateError.message);
+      return;
+    }
+
+    alert("Postarea a fost modificată!");
+    await loadPosts();
+  });
+});
   list.querySelectorAll(".delete-post").forEach(button => {
   button.addEventListener("click", async () => {
     if (!confirm("Sigur vrei să ștergi această postare?")) return;

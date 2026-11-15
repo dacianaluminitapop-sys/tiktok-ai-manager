@@ -12,7 +12,23 @@ function save(){localStorage.setItem("tam_clients",JSON.stringify(clients));rend
 function renderClients(){
   $("#client-count").textContent=clients.length;
   $("#overview-clients").innerHTML=clients.slice(0,4).map(c=>`<article class="client-card"><h3>${escapeHtml(c.name)}</h3><p>${escapeHtml(c.industry)}</p><span class="tag">${escapeHtml(c.status)}</span></article>`).join("");
-  $("#client-list").innerHTML=clients.map(c=>`<div class="client-row"><div class="client-info"><div class="initial">${escapeHtml(c.name.slice(0,1).toUpperCase())}</div><div><h3>${escapeHtml(c.name)}</h3><p>${escapeHtml(c.industry)}</p></div></div><span class="tag">${escapeHtml(c.status)}</span></div>`).join("");
+  
+$("#client-list").innerHTML = clients.map(c => `
+  <div class="client-row">
+    <div class="client-info">
+      <div class="initial">${escapeHtml(c.name.slice(0,1).toUpperCase())}</div>
+      <div>
+        <h3>${escapeHtml(c.name)}</h3>
+        <p>${escapeHtml(c.industry)}</p>
+      </div>
+    </div>
+    <span class="tag">${escapeHtml(c.status)}</span>
+    <button class="primary connect-tiktok" data-company-id="${c.id}">
+      Conectează TikTok
+    </button>
+  </div>
+`).join("");
+
   $("#business").innerHTML=clients.map((c,i)=>`<option value="${i}">${escapeHtml(c.name)}</option>`).join("");
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
@@ -198,6 +214,7 @@ async function loadCalendar() {
   calendar.innerHTML = "<p>Se încarcă postările programate...</p>";
 
   const companyIds = clients.map(company => company.id);
+  console.log("COMPANII ȘI ID-URI:", clients);
 
   const { data, error } = await supabaseClient
     .from("content_posts")
@@ -249,6 +266,8 @@ async function loadPosts() {
   list.innerHTML = "<p>Se încarcă postările...</p>";
 
   const companyIds = clients.map(company => company.id);
+  console.log("COMPANII DIN POSTĂRI:", clients);
+console.log("ID-URI:", companyIds);
 
   const { data, error } = await supabaseClient
     .from("content_posts")
@@ -285,6 +304,7 @@ async function loadPosts() {
     `;
   }).join("");
   
+  
   list.querySelectorAll(".edit-post").forEach(button => {
   button.addEventListener("click", async () => {
     const postId = button.dataset.id;
@@ -296,7 +316,7 @@ async function loadPosts() {
       .single();
 
     if (error) {
-      alert("Eroare la încărcare: " + error.message);
+      alert("Eroare la încărcarea postării: " + error.message);
       return;
     }
 
@@ -444,4 +464,42 @@ async function checkAdminRole() {
  loginScreen.style.display = "none";
   }
 checkAdminRole();
+
+document.addEventListener("click", async (event) => {
+  const button = event.target.closest(".connect-tiktok");
+
+  if (!button) return;
+
+  const companyId = button.dataset.companyId;
+
+  button.disabled = true;
+  button.textContent = "Se conectează...";
+
+  try {
+    const { data, error } = await supabaseClient.functions.invoke(
+      "tiktok-auth-start",
+      {
+        body: {
+          company_id: companyId
+        }
+      }
+    );
+
+    if (error) throw error;
+
+    if (!data?.authorization_url) {
+      throw new Error("Nu am primit adresa de autorizare TikTok.");
+    }
+
+    window.location.href = data.authorization_url;
+
+  } catch (error) {
+    console.error("Eroare conectare TikTok:", error);
+    alert("Nu s-a putut porni conectarea TikTok: " + error.message);
+
+    button.disabled = false;
+    button.textContent = "Conectează TikTok";
+  }
+});
+
 

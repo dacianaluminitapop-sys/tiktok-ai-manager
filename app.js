@@ -23,9 +23,10 @@ $("#client-list").innerHTML = clients.map(c => `
       </div>
     </div>
     <span class="tag">${escapeHtml(c.status)}</span>
-    <button class="primary connect-tiktok" data-company-id="${c.id}">
-      Conectează TikTok
-    </button>
+    ${c.tiktokDisplayName
+  ? `<span class="tag">TikTok conectat: ${escapeHtml(c.tiktokDisplayName)}</span>`
+  : `<button class="primary connect-tiktok" data-company-id="${c.id}">Conectează TikTok</button>`
+}
   </div>
 `).join("");
 
@@ -187,13 +188,26 @@ async function  loadCompanies() {
     alert("Nu pot încărca firmele: " + error.message);
     return;
   }
+const { data: tiktokAccounts, error: tiktokError } =
+  await supabaseClient.rpc("get_connected_tiktok_accounts");
 
+if (tiktokError) {
+  console.error("Eroare la citirea conturilor TikTok:", tiktokError);
+}
+
+const connectedAccounts = new Map(
+  (tiktokAccounts || []).map(account => [
+    account.company_id,
+    account.display_name
+  ])
+);
   clients = data
     .filter(member => member.companies)
     .map(member => ({
       id: member.companies.id,
       name: member.companies.name,
       industry: member.companies.industry || "Domeniu nespecificat",
+      tiktokDisplayName: connectedAccounts.get(member.companies.id) || null,
       status: "Activă"
     }));
 
@@ -397,8 +411,7 @@ list.querySelectorAll(".schedule-post").forEach(button => {
 });
 }
 
-loadCompanies();
-renderClients();
+
 const loginForm = document.querySelector("#login-form");
 const loginScreen = document.querySelector("#login-screen");
 console.log("TEST LOGIN:", loginScreen);
@@ -429,8 +442,11 @@ async function checkLogin() {
   const { data } = await supabaseClient.auth.getSession();
 
   if (data.session) {
-    loginScreen.style.display = "flex";
-  }
+  loginScreen.style.display = "none";
+  await loadCompanies();
+} else {
+  loginScreen.style.display = "flex";
+}
 }
 checkLogin();
 async function checkAdminRole() {

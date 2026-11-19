@@ -172,6 +172,8 @@ $("#generate").addEventListener("click", async () => {
 });
 
 async function  loadCompanies() {
+  const { data: sessionData } = await supabaseClient.auth.getSession();
+console.log("SESIUNE ACTIVĂ:", sessionData.session);
   const { data, error } = await supabaseClient
     .from("company_members")
     .select(`

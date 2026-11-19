@@ -31,6 +31,9 @@
       </button>
 
       <p id="login-message"></p>
+      <button type="button" id="register-button">
+  Creează cont nou
+</button>
     </form>
   </div>
 </div>
@@ -69,6 +72,12 @@
         <label for="topic">Domeniul / subiectul videoclipului</label><input id="topic" placeholder="Ex.: prezentarea unui produs nou">
         <button class="primary" id="generate">Generează propunere</button>
         <div id="generated" class="generated hidden"></div>
+        <label for="video-file">Încarcă videoclipul TikTok</label>
+<input type="file" id="video-file" accept="video/mp4,video/*">
+
+<video id="video-preview" controls style="display:none; width:100%; max-width:500px; margin-top:15px;"></video>
+<button class="primary" id="publish-tiktok">Publică pe TikTok</button>
+
       </div>
     </section>
     <section id="posts" class="page">

@@ -30,7 +30,7 @@ $("#client-list").innerHTML = clients.map(c => `
   </div>
 `).join("");
 
-  $("#business").innerHTML=clients.map((c,i)=>`<option value="${i}">${escapeHtml(c.name)}</option>`).join("");
+  $("#business").innerHTML=clients.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function showPage(id){
@@ -79,7 +79,7 @@ async function addClient() {
 $("#add-client").addEventListener("click",addClient);
 
 $("#generate").addEventListener("click", async () => {
-  const client = clients[Number($("#business").value)];
+  const client = clients.find(c => c.id === $("#business").value);
   const topic = $("#topic").value.trim() || "prezentarea afacerii";
 
   if (!client) {
@@ -416,6 +416,30 @@ const loginForm = document.querySelector("#login-form");
 const loginScreen = document.querySelector("#login-screen");
 console.log("TEST LOGIN:", loginScreen);
 const loginMessage = document.querySelector("#login-message");
+const registerButton = document.querySelector("#register-button");
+console.log("TEST REGISTER:", registerButton);
+
+registerButton.addEventListener("click", async () => {
+  const email = document.querySelector("#login-email").value.trim();
+  const password = document.querySelector("#login-password").value;
+
+  if (!email || password.length < 6) {
+    alert("Introdu emailul și o parolă de cel puțin 6 caractere.");
+    return;
+  }
+
+  const { error } = await supabaseClient.auth.signUp({
+    email,
+    password
+  });
+
+  if (error) {
+    alert("Eroare la creare cont: " + error.message);
+    return;
+  }
+
+  alert("Cont creat! Verifică emailul pentru confirmare.");
+});
 
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -442,11 +466,11 @@ async function checkLogin() {
   const { data } = await supabaseClient.auth.getSession();
 
   if (data.session) {
-  loginScreen.style.display = "none";
-  await loadCompanies();
-} else {
-  loginScreen.style.display = "flex";
-}
+    loginScreen.style.display = "none";
+    await loadCompanies();
+  } else {
+    loginScreen.style.display = "flex";
+  }
 }
 checkLogin();
 async function checkAdminRole() {
@@ -517,5 +541,74 @@ document.addEventListener("click", async (event) => {
     button.textContent = "Conectează TikTok";
   }
 });
+const videoFileInput = document.getElementById("video-file");
+const videoPreview = document.getElementById("video-preview");
+
+if (videoFileInput && videoPreview) {
+  videoFileInput.addEventListener("change", () => {
+    const file = videoFileInput.files[0];
+
+    if (!file) return;
+
+    videoPreview.src = URL.createObjectURL(file);
+    videoPreview.style.display = "block";
+  });
+}
+const publishTikTokButton = document.getElementById("publish-tiktok");
+
+
+if (publishTikTokButton) {
+  publishTikTokButton.addEventListener("click", async () => {
+    const video = videoFileInput?.files?.[0];
+    const companyId = document.getElementById("business")?.value;
+    const title = document.getElementById("topic")?.value || "";
+
+    if (!video) {
+      alert("Alege mai întâi un videoclip.");
+      return;
+    }
+
+    if (!companyId) {
+      alert("Alege mai întâi compania.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("video", video);
+    formData.append("company_id", companyId);
+    formData.append("title", title);
+
+    publishTikTokButton.disabled = true;
+    publishTikTokButton.textContent = "Se trimite...";
+
+    try {
+      const { data, error } = await supabaseClient.functions.invoke(
+        "tiktok-publish",
+        { body: formData }
+      );
+
+      if (error) throw error;
+
+      alert(data?.message || "Cererea a fost trimisă către TikTok.");
+    } catch (error) {
+  console.error("Eroare publicare TikTok:", error);
+
+  let mesaj = error.message;
+
+  if (error.context) {
+    try {
+      const detalii = await error.context.json();
+      mesaj = detalii.error || JSON.stringify(detalii);
+    } catch (e) {}
+  }
+
+  alert("Eroare: " + mesaj);
+} finally  {
+      publishTikTokButton.disabled = false;
+      publishTikTokButton.textContent = "Publică pe TikTok";
+    }
+  });
+}
+
 
 

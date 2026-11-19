@@ -43,33 +43,31 @@ document.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",(
 document.querySelector('[data-page="posts"]').addEventListener("click", loadPosts);
 document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.goto)));
 
-async function addClient() {
-  const name = prompt("Numele companiei:");
-  if (!name || !name.trim()) return;
 
-  const industry = prompt(
-    "Domeniul companiei (ex.: restaurant, beauty, servicii):"
-  ) || "Domeniu nespecificat";
+const { data: sessionData } = await supabaseClient.auth.getSession();
 
-  const { data, error } = await supabaseClient
-    .from("companies")
-    .insert({
-      name: name.trim(),
-      industry: industry.trim()
-    })
-    .select()
-    .single();
+console.log("SESIUNE ACTIVĂ:", sessionData.session ? "DA" : "NU");
 
-  if (error) {
-    alert("Eroare la salvarea companiei: " + error.message);
-    return;
-  }
+const { data, error } = await supabaseClient
+  .from("companies")
+  .insert({
+    name: name.trim(),
+    industry: industry.trim()
+  })
+  .select()
+  .single();
 
-  clients.push({
-    name: data.name,
-    industry: data.industry,
-    status: "Activă"
-  });
+if (error) {
+  alert("Eroare la salvarea companiei: " + error.message);
+  return;
+}
+
+clients.push({
+  name: data.name,
+  industry: data.industry,
+  status: "Activă"
+});
+
 
   save();
   await loadCalendar();

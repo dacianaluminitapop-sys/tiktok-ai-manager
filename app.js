@@ -37,18 +37,11 @@ function showPage(id){
  document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===id));
  document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
 const titles={overview:"Prezentare generală",clients:"Companii",content:"Idei de conținut",posts:"Postările mele",calendar:"Calendar"};
-async function addClient() {
-    $("#business").innerHTML=clients.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
-
-function showPage(id) {
-  document.querySelectorAll(".page").forEach(p =>
-    p.classList.toggle("active", p.id === id)
-  );
-
-  document.querySelectorAll(".nav-item").forEach(b =>
-    b.classList.toggle("active", b.dataset.page === id)
-  );
+ $("#page-title").textContent=titles[id]||"TikTok AI Manager";
 }
+document.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
+document.querySelector('[data-page="posts"]').addEventListener("click", loadPosts);
+document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.goto)));
 
 async function addClient() {
   const name = prompt("Numele companiei:");
@@ -73,7 +66,6 @@ async function addClient() {
   }
 
   clients.push({
-    id: data.id,
     name: data.name,
     industry: data.industry,
     status: "Activă"
@@ -82,11 +74,8 @@ async function addClient() {
   save();
   await loadCalendar();
   showPage("clients");
+
 }
-
-$("#add-client").addEventListener("click", addClient);
-
-
 $("#add-client").addEventListener("click",addClient);
 
 $("#generate").addEventListener("click", async () => {
@@ -608,9 +597,20 @@ if (publishTikTokButton) {
 
   let mesaj = error.message;
 
-  
-  
+  if (error.context) {
+    try {
+      const detalii = await error.context.json();
+      mesaj = detalii.error || JSON.stringify(detalii);
+    } catch (e) {}
+  }
 
+  alert("Eroare: " + mesaj);
+} finally  {
+      publishTikTokButton.disabled = false;
+      publishTikTokButton.textContent = "Publică pe TikTok";
+    }
+  });
+}
 
 
 

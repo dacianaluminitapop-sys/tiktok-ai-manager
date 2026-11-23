@@ -78,14 +78,38 @@ async function addClient() {
 }
 $("#add-client").addEventListener("click",addClient);
 
-$("#generate").addEventListener("click", async () => {
-  const client = clients.find(c => c.id === $("#business").value);
-  const topic = $("#topic").value.trim() || "prezentarea afacerii";
 
-  if (!client) {
-    alert("Adaugă mai întâi o companie.");
+async function addClient() {
+  const name = prompt("Numele companiei:");
+  if (!name || !name.trim()) return;
+
+  const industry = prompt(
+    "Domeniul companiei (ex.: restaurant, beauty, servicii):"
+  ) || "Domeniu nespecificat";
+
+  const { error } = await supabaseClient
+    .from("companies")
+    .insert({
+      name: name.trim(),
+      industry: industry.trim()
+    });
+
+  if (error) {
+    alert("Eroare la salvarea companiei: " + error.message);
     return;
   }
+
+  clients.push({
+    name: name.trim(),
+    industry: industry.trim(),
+    status: "Activă"
+  });
+
+  save();
+  await loadCalendar();
+  showPage("clients");
+}
+
 
   const generated = $("#generated");
   generated.classList.remove("hidden");

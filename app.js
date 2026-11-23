@@ -79,38 +79,6 @@ async function addClient() {
 $("#add-client").addEventListener("click",addClient);
 
 
-async function addClient() {
-  const name = prompt("Numele companiei:");
-  if (!name || !name.trim()) return;
-
-  const industry = prompt(
-    "Domeniul companiei (ex.: restaurant, beauty, servicii):"
-  ) || "Domeniu nespecificat";
-
-  const { error } = await supabaseClient
-    .from("companies")
-    .insert({
-      name: name.trim(),
-      industry: industry.trim()
-    });
-
-  if (error) {
-    alert("Eroare la salvarea companiei: " + error.message);
-    return;
-  }
-
-  clients.push({
-    name: name.trim(),
-    industry: industry.trim(),
-    status: "Activă"
-  });
-
-  save();
-  await loadCalendar();
-  showPage("clients");
-}
-
-
   const generated = $("#generated");
   generated.classList.remove("hidden");
   generated.textContent = "AI-ul pregătește postarea...";

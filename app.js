@@ -77,7 +77,14 @@ async function addClient() {
 
 }
 $("#add-client").addEventListener("click",addClient);
+$("#generate").addEventListener("click", async () => {
+  const client = clients.find(c => c.id === $("#business").value);
+  const topic = $("#topic").value.trim() || "prezentarea afacerii";
 
+  if (!client) {
+    alert("Adaugă mai întâi o companie.");
+    return;
+  }
 
   const generated = $("#generated");
   generated.classList.remove("hidden");
